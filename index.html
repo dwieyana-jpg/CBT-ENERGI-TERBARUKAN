@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CBT + Google Sheet</title>
+<style>
+body{font-family:Arial;background:#f3f4f6;margin:0}
+.container{max-width:800px;margin:20px auto;background:#fff;padding:20px;border-radius:10px}
+input,button{padding:10px;margin:5px 0;width:100%}
+.option{display:block;margin:5px 0;padding:8px;background:#f9fafb;border-radius:8px}
+</style>
+</head>
+<body>
+<div class="container" id="login">
+<h3>Login</h3>
+<input id="nama" placeholder="Nama">
+<input id="kelas" placeholder="Kelas">
+<input id="absen" placeholder="No Absen">
+<button onclick="start()">Mulai</button>
+</div>
+
+<div class="container" id="exam" style="display:none">
+<div id="q"></div>
+<div id="opsi"></div>
+<button onclick="next()">Next</button>
+<button onclick="submitExam()">Submit</button>
+</div>
+
+<div class="container" id="done" style="display:none">
+<h3>Terima kasih, jawaban sudah terkirim</h3>
+</div>
+
+<script>
+const SCRIPT_URL = "PASTE_URL_WEB_APP_DISINI";
+
+const soal=[
+{q:"Energi terbarukan adalah...",o:["tidak terbatas","fosil","minyak","batu bara","gas"],a:0},
+{q:"Contoh energi terbarukan...",o:["batu bara","surya","minyak","uranium","diesel"],a:1}
+];
+
+let i=0,ans=[],nama='',kelas='',absen='';
+
+function start(){
+ nama=document.getElementById('nama').value;
+ kelas=document.getElementById('kelas').value;
+ absen=document.getElementById('absen').value;
+ if(!nama||!kelas||!absen){alert('Lengkapi data!');return}
+ document.getElementById('login').style.display='none';
+ document.getElementById('exam').style.display='block';
+ load();
+}
+
+function load(){
+ document.getElementById('q').innerText=soal[i].q;
+ let html='';
+ soal[i].o.forEach((op,idx)=>{
+  html+=`<label class='option'><input type='radio' onclick='ans[${i}]=${idx}'> ${op}</label>`;
+ });
+ document.getElementById('opsi').innerHTML=html;
+}
+
+function next(){ if(i<soal.length-1){i++;load();}}
+
+function submitExam(){
+ let benar=0;
+ soal.forEach((s,idx)=>{ if(ans[idx]==s.a) benar++; });
+ let skor=(benar/soal.length)*100;
+
+ fetch(SCRIPT_URL,{
+  method:"POST",
+  body:JSON.stringify({nama,kelas,absen,skor,benar,total:soal.length,waktu:new Date().toLocaleString()})
+ })
+ .then(()=>{
+   document.getElementById('exam').style.display='none';
+   document.getElementById('done').style.display='block';
+ })
+ .catch(()=>alert('Gagal kirim data'));
+}
+</script>
+</body>
+</html>
+
+<!-- ================= PETUNJUK =================
+1. Upload file HTML ke GitHub (atau buka langsung di HP)
+2. Aktifkan GitHub Pages (Settings → Pages)
+3. Share link ke siswa
+
+SCRIPT GOOGLE:
+function doPost(e){
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var data = JSON.parse(e.postData.contents);
+  sheet.appendRow([
+    new Date(),
+    data.nama,
+    data.kelas,
+    data.absen,
+    data.skor,
+    data.benar,
+    data.total
+  ]);
+  return ContentService.createTextOutput("OK");
+}
+================================================ -->
